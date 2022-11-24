@@ -78,6 +78,8 @@ impl TileBag{
     }
 }
 
+/*
+
 impl std::fmt::Display for TileBag{
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result{
@@ -86,6 +88,33 @@ impl std::fmt::Display for TileBag{
 
         for (letter,tile_vector) in &self.data{
             result.push(*letter);
+            result.push_str(" : ");
+            
+            for tile in tile_vector.iter(){
+                result = result + &tile.to_string();
+            }
+
+            result.push('\n')
+
+        }
+
+       write!(f,"{}", result)
+    }
+
+}
+*/
+
+impl std::fmt::Display for TileBag{
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result{
+
+        let mut result = String::new();
+
+        let mut vector: Vec<(&char, &Vec<Tile>)> = self.data.iter().collect();
+        vector.sort_by(|a,b| a.0.cmp(b.0));
+
+        for (letter,tile_vector) in &vector{
+            result.push(**letter);
             result.push_str(" : ");
             
             for tile in tile_vector.iter(){
