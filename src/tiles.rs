@@ -87,37 +87,6 @@ impl TileBag{
 
     }
 
-    /*
-    pub fn draw_tile(&mut self) -> Option<Tile>{
-
-        println!("starting draw_tile()");
-
-        let mut rng = rand::thread_rng();
-        let mut result: Option<Tile> = None;
-
-        if self.num == 0 {
-            println!("No tiles remaining\n");
-            result = None;
-        } 
-        else{
-            let mut found = false;
-            println!("loop");
-            while !found{
-                let letter_num: u8 = rng.gen_range(0..26);
-                let letter_char: char = (65+letter_num) as char;
-                println!("drawing from {}", letter_char);
-                if self.data[&letter_char].len() != 0 {
-                    found = true;
-                    result = self.data.get_mut(&letter_char).unwrap().pop()
-                }
-            }
-        }
-
-        result
-        
-    }
-    */
-
     pub fn draw_tile(&mut self) -> Option<Tile>{
 
         let mut rng = rand::thread_rng();
