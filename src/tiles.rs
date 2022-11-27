@@ -30,6 +30,15 @@ impl Tile{
         self.letter
     }
 
+    pub fn get_tile(&self)-> String{
+        let mut result = String::new();
+        result.push_str(" [");
+        result.push_str(&self.letter.to_string());
+        result.push_str(&self.point_subscript.to_string());
+        result.push_str("] ");
+        result
+    }
+
     const UNICODE_SUBSCRIPT_BASE: u32 = 0x2080;
 
     fn generate_subscript(point_value: u8) -> char {

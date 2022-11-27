@@ -7,10 +7,10 @@ use tiles::{TileBag, Tile};
 use board::Board;
 use tui::{
     backend::{CrosstermBackend, Backend},
-    widgets::{Widget, Block, Borders, Cell, Row, Table},
-    layout::{Layout,Constraint,Direction},
+    widgets::{Widget, Block, Borders, Cell, Row, Table, Paragraph, Tabs, BorderType},
+    layout::{Layout,Constraint,Direction, Alignment},
     Frame,
-    Terminal, text::Span, style::{Style, Modifier}
+    Terminal, text::{Span, Spans}, style::{Style, Modifier}
 };
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -74,9 +74,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
 
 fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
 
-    let rack_tile_style = Style::default().bg(tui::style::Color::Green).add_modifier(Modifier::BOLD);
-
-    let main = Layout::default()
+    let main_layout = Layout::default()
         .direction(Direction::Horizontal)
         .margin(1)
         .constraints(
@@ -87,7 +85,7 @@ fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
         )
         .split(f.size());
 
-    let gameboard = Layout::default()
+    let gameboard_layout = Layout::default()
         .direction(Direction::Vertical)
         .margin(0)
         .constraints(
@@ -97,11 +95,13 @@ fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
                 Constraint::Percentage(15),
             ]
         )
-        .split(main[0]);
+        .split(main_layout[0]);
 
     let score = Block::default().title("score").borders(Borders::ALL);
-    f.render_widget(score, gameboard[0]);
+    f.render_widget(score, gameboard_layout[0]);
 
+    let board = Block::default().title("board").borders(Borders::ALL);
+    /*
     let rows = app.board.board.iter().map(|row| {
         let cells = row.iter().map(|c|{
                     //println!("Working on ({},{})", c.row, c.col);
@@ -116,24 +116,16 @@ fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
             );
         Row::new(cells).height(1).bottom_margin(1)
     });
-
     let board_table = Table::new(rows).widths(&[Constraint::Percentage(100)]).block(Block::default().title("board").borders(Borders::ALL));
-    f.render_widget(board_table, gameboard[1]);
+    */
+    f.render_widget(board, gameboard_layout[1]);
 
-    let rack_tiles = app.racks[0].get_tiles();
-    let cell_itr = rack_tiles.iter().map(
-        |tile|{
-            Cell::from(Span::from(tile.get_letter().to_string())).style(rack_tile_style)
-        }
-    );
-
-    let tile_row = Row::new(cell_itr).height(1).bottom_margin(1);
-    let tile_row_vector = vec![tile_row];
-    let tile_table = Table::new(tile_row_vector).widths(&[Constraint::Percentage(100)]).block(Block::default().title("tile_rack").borders(Borders::ALL));
-    f.render_widget(tile_table, gameboard[2]);
-    
+    let player_tiles = app.racks[0].get_tiles().iter().map(|t| {Spans::from(t.get_tile())}).collect();
+    let rack_tile_style = Style::default().bg(tui::style::Color::LightYellow).fg(tui::style::Color::Black).add_modifier(Modifier::BOLD);
+    let tile_rack = Tabs::new(player_tiles).block(Block::default().title("rack").border_type(BorderType::Double)).style(rack_tile_style).divider(" ");
+    f.render_widget(tile_rack, gameboard_layout[2]);
 
     let block2 = Block::default().title("game_log").borders(Borders::ALL);
-    f.render_widget(block2, main[1]);
+    f.render_widget(block2, main_layout[1]);
 
 }
