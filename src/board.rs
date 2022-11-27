@@ -1,22 +1,23 @@
 use crate::tiles::Tile;
 use std::fmt;
+use tui::{text::Text, widgets::Cell};
 pub struct Board{
     row: u8,
     col: u8,
-    board: Vec<Vec<Cell>>,
+    pub board: Vec<Vec<Space>>,
 }
 
 impl Board{
     
     pub fn new(row: u8, col: u8) -> Self{
 
-        let mut board: Vec<Vec<Cell>> = Vec::new();
+        let mut board: Vec<Vec<Space>> = Vec::new();
         
         for r in 0..row{
-            let mut row_vector: Vec<Cell> = Vec::new();
+            let mut row_vector: Vec<Space> = Vec::new();
             for c in 0..col{
                 row_vector.push(
-                    Cell { row: r, col: c, modifier: CellModifier::Normal, tile: Option::None }
+                    Space { row: r, col: c, modifier: SpaceModifier::Normal, tile: Option::None }
                 )
             }
             board.push(row_vector);
@@ -38,7 +39,7 @@ impl std::fmt::Display for Board{
 
        for r in 0..self.row{
         for c in 0..self.col{
-            let cell: &Cell = self.board.get(r as usize).unwrap().get(c as usize).unwrap();
+            let cell: &Space = self.board.get(r as usize).unwrap().get(c as usize).unwrap();
             result.push_str(&cell.to_string());
         }
         result.push('\n');
@@ -49,15 +50,15 @@ impl std::fmt::Display for Board{
 
 }
 
-struct Cell{
-    row: u8,
-    col: u8,
-    modifier: CellModifier,
-    tile: Option<Tile>,
+pub struct Space{
+    pub row: u8,
+    pub col: u8,
+    modifier: SpaceModifier,
+    pub tile: Option<Tile>,
 }
 
 
-enum CellModifier{
+enum SpaceModifier{
     DoubleLetter,
     TripleLetter,
     DoubleWord,
@@ -65,13 +66,13 @@ enum CellModifier{
     Normal,
 }
 
-impl Cell{
-    fn new(row: u8, col: u8, modifier: CellModifier)->Self{
-        Cell { row: row, col: col, modifier: modifier, tile: Option::None,}
+impl Space{
+    fn new(row: u8, col: u8, modifier: SpaceModifier)->Self{
+        Space { row: row, col: col, modifier: modifier, tile: Option::None,}
     }
 }
 
-impl std::fmt::Display for Cell{
+impl std::fmt::Display for Space{
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result{
        let mut result: String = "".to_string();

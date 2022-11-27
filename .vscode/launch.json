@@ -7,20 +7,10 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "launch",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=krible",
-                    "--package=krible"
-                ],
-                "filter": {
-                    "name": "krible",
-                    "kind": "bin"
-                }
-            },
+            "name": "Debug",
+            "program": "${workspaceFolder}/<executable file>",
             "args": [],
             "cwd": "${workspaceFolder}"
-        },
+        }
     ]
 }

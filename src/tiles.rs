@@ -147,7 +147,7 @@ impl std::fmt::Display for TileBag{
 
 
 pub struct TileRack{
-    data: HashMap<char,Vec<Tile>>,
+    pub data: HashMap<char,Vec<Tile>>,
     num: u8,
 }
 
@@ -198,6 +198,20 @@ impl TileRack{
             self.num+=1;
         }
 
+    }
+
+    pub fn get_tiles(&mut self) -> Vec<&Tile>{
+
+        let mut result: Vec<&Tile> = Vec::with_capacity(7);
+        for (letter, tiles) in self.data.iter(){
+
+            for tile in tiles.iter(){
+                result.push(tile);
+            }
+
+        }
+
+        result
     }
 
     pub fn get_count(&self) -> u8{
