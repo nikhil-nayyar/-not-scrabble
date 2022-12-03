@@ -3,24 +3,34 @@ mod constants;
 mod tiles;
 mod app;
 
-use tiles::{TileBag, Tile};
+use log::debug;
+use log::error;
+use log::info;
+use log::warn;
+
+use tiles::{TileBag};
 use board::Board;
 use tui::{
     backend::{CrosstermBackend, Backend},
-    widgets::{Widget, Block, Borders, Cell, Row, Table, Paragraph, Tabs, BorderType},
-    layout::{Layout,Constraint,Direction, Alignment},
+    widgets::{Borders, BorderType, Block},
+    layout::{Layout,Constraint,Direction},
     Frame,
-    Terminal, text::{Span, Spans}, style::{Style, Modifier}
+    Terminal,
 };
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{io, thread, time::Duration, cell};
-use app::App;
+use std::{io, char};
+use app::{App, TuiState};
 
 fn main() -> Result<(),io::Error> {
+
+    env_logger::init();
+    info!("krible version 0.0.1");
+    info!("author: Nikhil Nayyar");
+    info!("last updated: Dec 2, 2022");
 
     let mut terminal = preset_terminal()?;
 
@@ -30,7 +40,9 @@ fn main() -> Result<(),io::Error> {
 
     let res = run_app(&mut terminal,app);
 
+    info!("returning terminal to original state");
     postset_terminal(terminal)?;
+    info!("exiting krible");
 
     Ok(())
 }
@@ -62,10 +74,46 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
         terminal.draw(|f|{ui(f, &mut app);})?;
 
         if let Event::Key(key) = event::read()?{
+            info!("logged key {}", format!("{key:#?}"));
             match key.code{
-                KeyCode::Char('q') => return Ok(()),
-                _ => (),
+                KeyCode::Char('q') => {return Ok(())}
+                _ => {}
             }
+
+            let prev_state = &app.state.clone();
+            info!("previous state {}", format!("{prev_state:#?}"));
+            match &app.state{
+                TuiState::Board => {
+                    match key.code{
+                        KeyCode::Char('t') => {app.state=TuiState::Transition}
+                        _ => {}
+                    }
+                }
+                TuiState:: Chat => {
+                    match key.code{
+                        KeyCode::Char('t') => {app.state=TuiState::Transition}
+                        _ => {}
+                    }
+                }
+                TuiState::Rack => {
+                    match key.code{
+                        KeyCode::Char('t') => {app.state=TuiState::Transition}
+                        _ => {}
+                    }                    
+                }
+                TuiState::Transition => {
+                    match key.code{
+                        KeyCode::Char('b') => {app.selected=TuiState::Board;}
+                        KeyCode::Char('c') => {app.selected=TuiState::Chat;}
+                        KeyCode::Char('r') => {app.selected=TuiState::Rack;}
+                        KeyCode::Char('t') => {app.state = app.selected;}
+                        _ => {}
+                    }
+                }
+            }
+
+            let new_state = &app.state.clone();
+            info!("new state {}", format!("{new_state:#?}"));
         }
 
     }
@@ -74,7 +122,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
 
 fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
 
-    let main_layout = Layout::default()
+    let terminal_layout = Layout::default()
         .direction(Direction::Horizontal)
         .margin(1)
         .constraints(
@@ -95,12 +143,15 @@ fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
                 Constraint::Percentage(15),
             ]
         )
-        .split(main_layout[0]);
+        .split(terminal_layout[0]);
 
     let score = Block::default().title("score").borders(Borders::ALL);
     f.render_widget(score, gameboard_layout[0]);
 
-    let board = Block::default().title("board").borders(Borders::ALL);
+    let border_selected_type = if matches!(app.state,TuiState::Transition) {BorderType::Double} else {BorderType::Thick};
+    let border_unselected_type = BorderType::Plain;
+
+    let board = Block::default().title("(b)oard").borders(Borders::ALL).border_type(if matches!(&app.selected, TuiState::Board) {border_selected_type} else{border_unselected_type});
     /*
     let rows = app.board.board.iter().map(|row| {
         let cells = row.iter().map(|c|{
@@ -120,12 +171,15 @@ fn ui <B: Backend>(f: &mut Frame<B>, app: &mut App){
     */
     f.render_widget(board, gameboard_layout[1]);
 
+    /*
     let player_tiles = app.racks[0].get_tiles().iter().map(|t| {Spans::from(t.get_tile())}).collect();
     let rack_tile_style = Style::default().bg(tui::style::Color::LightYellow).fg(tui::style::Color::Black).add_modifier(Modifier::BOLD);
     let tile_rack = Tabs::new(player_tiles).block(Block::default().title("rack").border_type(BorderType::Double)).style(rack_tile_style).divider(" ");
+    */
+    let tile_rack = Block::default().title("(r)ack").borders(Borders::ALL).border_type(if matches!(&app.selected, TuiState::Rack) {border_selected_type} else{border_unselected_type});
     f.render_widget(tile_rack, gameboard_layout[2]);
 
-    let block2 = Block::default().title("game_log").borders(Borders::ALL);
-    f.render_widget(block2, main_layout[1]);
+    let block2 = Block::default().title("(c)hat").borders(Borders::ALL).border_type(if matches!(&app.selected, TuiState::Chat) {border_selected_type} else{border_unselected_type});
+    f.render_widget(block2, terminal_layout[1]);
 
 }

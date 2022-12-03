@@ -89,9 +89,6 @@ impl TileBag{
             }
             generated.insert( *letter, letter_vector);
         }
-
-        println!("Generated TileBag with {} tiles", num);
-
         return TileBag { data: generated, num: num}
 
     }
@@ -102,7 +99,6 @@ impl TileBag{
         let mut result: Option<Tile> = None;
 
         if self.num == 0 {
-            println!("No tiles remaining\n");
             result = None;
         } 
         else{

@@ -1,10 +1,20 @@
 use crate::{board::Board};
 use crate::tiles::{TileRack, TileBag, Tile};
 
+#[derive(Debug, Clone, Copy)]
+pub enum TuiState{
+    Board,
+    Chat,
+    Rack,
+    Transition
+}
+
 pub struct App{
     pub board: Board,
     bag: TileBag,
     pub racks: Vec<TileRack>,
+    pub state: TuiState,
+    pub selected: TuiState,
 }
 
 impl App{
@@ -15,7 +25,7 @@ impl App{
         for _ in 0..num_players{
             racks.push(TileRack::new(&mut bag));
         }
-        App { board:board, bag: bag, racks: racks }
+        App { board:board, bag: bag, racks: racks, state: TuiState::Chat, selected: TuiState::Chat}
     }
 
 }
