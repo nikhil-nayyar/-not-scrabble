@@ -4,26 +4,32 @@ use core::fmt;
 use std::{char::from_u32};
 use std::collections::HashMap;
 use std::thread::sleep;
-use std::time;
 use rand::Rng;
 use crate::constants::LETTER_COUNT;
 use crate::constants::LETTER_VALUE;
 
 pub struct Tile{
     letter: char,
-    point_value: u8,
-    point_subscript: char,
+    value: u8,
+    subscript: char,
+    status: TileStatus,
+}
+
+pub enum TileStatus{
+    Board,
+    Rack,
+    Bag
 }
 
 impl Tile{
 
-    pub fn new(letter: char, point_value: u8) -> Self{
-        let t:Self = Tile{
-            letter: letter,
-            point_value: point_value,
-            point_subscript: Self::generate_subscript( point_value),
-        };
-        t
+    pub fn new(letter: char, value: u8, status: TileStatus) -> Self{
+        Tile{
+            letter,
+            value,
+            subscript: Self::generate_subscript(value),
+            status
+        }
     }
     
     pub fn get_letter(&self)->char{
@@ -47,13 +53,17 @@ impl Tile{
 
     }
 
+    pub fn set_status(&mut self, new_status: TileStatus){
+        self.status = new_status;
+    }
+
 
 }
 
 impl std::fmt::Display for Tile{
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result{
-        write!(f, "[{}{}]", self.letter, self.point_subscript)
+        write!(f, "{}{}", self.letter, self.subscript)
     }
 
 }
@@ -75,15 +85,13 @@ impl TileBag{
             num+=count;
             for _ in 0..*count{
                 letter_vector.push(
-                    Tile::new(*letter, LETTER_VALUE[letter])
+                    Tile::new(*letter, LETTER_VALUE[letter], TileStatus::Bag)
                 )
             }
             generated.insert( *letter, letter_vector);
         }
 
-        println!("Generated TileBag with {} tiles", num);
-
-        return TileBag { data: generated, num: num}
+        TileBag { data: generated, num}
 
     }
 
@@ -93,7 +101,6 @@ impl TileBag{
         let mut result: Option<Tile> = None;
 
         if self.num == 0 {
-            println!("No tiles remaining\n");
             result = None;
         } 
         else{
@@ -101,7 +108,7 @@ impl TileBag{
             while !found{
                 let letter_num: u8 = rng.gen_range(0..26);
                 let letter_char: char = (65+letter_num) as char;
-                if self.data[&letter_char].len() != 0 {
+                if !self.data[&letter_char].is_empty() {
                     found = true;
                     result = self.data.get_mut(&letter_char).unwrap().pop();
                     self.num -= 1;
@@ -147,7 +154,7 @@ impl std::fmt::Display for TileBag{
 
 
 pub struct TileRack{
-    pub data: HashMap<char,Vec<Tile>>,
+    data: HashMap<char,Vec<Tile>>,
     num: u8,
 }
 
@@ -175,43 +182,75 @@ impl TileRack{
             num: 0
         };
 
-        rack.get_letters(bag);
+        rack.draw_tiles(bag);
 
         rack
 
     }
 
-    fn get_letters(&mut self, bag: &mut TileBag) -> (){
+    fn store_tile(&mut self, tile: Tile){
+
+        let t_char = &tile.get_letter();
+
+        if self.data.contains_key(t_char) {
+            let vector = self.data.get_mut(&tile.get_letter()).unwrap();
+            vector.push(tile);
+        } else{
+            let mut vector = vec![];
+            vector.push(tile);
+            self.data.insert(*t_char, vector);
+        }
+
+        self.num+=1;
+
+    }
+
+    fn draw_tiles(&mut self, bag: &mut TileBag){
 
         while self.num < 7 {
-            let t = bag.draw_tile().unwrap();
-            let t_char = &t.get_letter();
-
-            if self.data.contains_key(t_char) {
-                let vector = self.data.get_mut(&t.get_letter()).unwrap();
-                vector.push(t);
-            } else{
-                let mut vector = vec![];
-                vector.push(t);
-                self.data.insert(*t_char, vector);
-            }
-            self.num+=1;
+            let mut t = bag.draw_tile().unwrap();
+            t.set_status(TileStatus::Rack);
+            self.store_tile(t);
         }
 
     }
 
-    pub fn get_tiles(&mut self) -> Vec<&Tile>{
+    pub fn retrieve_tiles_as_string(&self) -> Vec<String>{
 
-        let mut result: Vec<&Tile> = Vec::with_capacity(7);
-        for (letter, tiles) in self.data.iter(){
+        let mut result: Vec<String> = Vec::with_capacity(7);
 
-            for tile in tiles.iter(){
-                result.push(tile);
+        for tiles in self.data.values(){
+            for tile in tiles{
+                result.push(tile.to_string());
             }
 
         }
 
         result
+    }
+
+    pub fn pickup_tile(&mut self, letter: &char) -> Option<Tile>{
+
+        let result = self.data.get(letter);
+
+        match result{
+            Some(_c) => {
+                let vec = self.data.get_mut(letter).unwrap();
+                let tile = vec.pop();
+
+                if vec.is_empty(){
+                    self.data.remove(letter);
+                }
+
+                tile
+            }
+            None => {None}
+        }
+
+    }
+
+    pub fn place_tile(&mut self, tile: Tile){
+        self.store_tile(tile);
     }
 
     pub fn get_count(&self) -> u8{
